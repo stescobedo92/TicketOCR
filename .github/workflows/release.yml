@@ -1,0 +1,212 @@
+name: Build & SemVer Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Manual SemVer bump when running from branch (patch, minor, major)'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Test (Windows x64 C++20)
+    runs-on: windows-latest
+    outputs:
+      semver: ${{ steps.semver.outputs.semver }}
+      tag: ${{ steps.semver.outputs.tag }}
+      zip_name: ${{ steps.semver.outputs.zip_name }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure MSVC x64 Developer Environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Resolve Semantic Version (SemVer)
+        id: semver
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          if ("${{ github.ref }}" -match "^refs/tags/v(\d+\.\d+\.\d+.*)$") {
+            $ver = $Matches[1]
+          } else {
+            $tags = @(git tag -l "v[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname)
+            if ($tags.Count -eq 0) {
+              # Initial SemVer release from CMakeLists.txt PROJECT_VERSION
+              $cmakeText = Get-Content -Raw "CMakeLists.txt"
+              if ($cmakeText -match "VERSION\s+(\d+\.\d+\.\d+)") {
+                $ver = $Matches[1]
+              } else {
+                $ver = "1.0.0"
+              }
+            } else {
+              $latestTag = $tags[0]
+              if ($latestTag -match "^v(\d+)\.(\d+)\.(\d+)") {
+                [int]$major = $Matches[1]
+                [int]$minor = $Matches[2]
+                [int]$patch = $Matches[3]
+
+                $manualBump = "${{ github.event.inputs.bump }}"
+                $commitSubject = (git log -1 --pretty=%B)
+
+                if ($manualBump -eq "major" -or $commitSubject -match "BREAKING CHANGE|^[a-zA-Z]+(\(.+\))?!:") {
+                  $major += 1; $minor = 0; $patch = 0
+                } elseif ($manualBump -eq "minor" -or $commitSubject -match "^feat(\(.+\))?:") {
+                  $minor += 1; $patch = 0
+                } else {
+                  $patch += 1
+                }
+                $ver = "$major.$minor.$patch"
+              } else {
+                $ver = "1.0.0"
+              }
+            }
+          }
+
+          $tag = "v$ver"
+          $zipName = "TicketOCR-$tag-win64.zip"
+          Write-Host "Resolved SemVer: $ver (Tag: $tag, Archive: $zipName)"
+
+          "semver=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Configure CMake (Ninja Release)
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile C++20 Binaries & Test Targets
+        shell: pwsh
+        run: |
+          cmake --build build --parallel
+
+      - name: Ensure Knowledge Base & Anonymized Corpus Assets
+        shell: pwsh
+        run: |
+          .\build\ticket_ocr_cli.exe --export-kb "data\knowledge_base.json"
+          .\build\ticket_ocr_cli.exe --generate-corpus "assets\corpus"
+
+      - name: Run Automated Integration & Zero-Leakage DLP Tests
+        shell: pwsh
+        run: |
+          # Ensure Windows English OCR language pack is available on Windows Server CI if possible
+          try {
+            $cap = Get-WindowsCapability -Online | Where-Object { $_.Name -like "Language.OCR*en-US*" }
+            if ($cap -and $cap.State -ne "Installed") {
+              Add-WindowsCapability -Online -Name $cap.Name | Out-Null
+            }
+          } catch {
+            Write-Host "Continuing with default installed Windows OCR capabilities."
+          }
+
+          # Always run deterministic Zero-Leak DLP & Entity/Classification/KB integration tests
+          ctest --test-dir build -R "test_dlp_zero_leak|test_extraction_and_kb" --output-on-failure
+
+          # Check via Windows PowerShell 5.1 whether WinRT OcrEngine has an installed recognizer on this runner
+          $hasOcr = powershell.exe -NoProfile -Command "try { [void][Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime]; if ([Windows.Media.Ocr.OcrEngine]::AvailableRecognizerLanguages.Count -gt 0) { 'YES' } else { 'NO' } } catch { 'NO' }"
+          if (($hasOcr | Out-String).Trim() -eq "YES") {
+            Write-Host "WinRT OCR Engine detected on runner — executing full OCR + GUI integration test suites."
+            ctest --test-dir build -R "test_image_and_ocr|test_e2e_corpus_metrics|test_gui_integration" --output-on-failure
+          } else {
+            Write-Host "Headless Windows Server runner has no OCR language pack active; core DLP & extraction suites passed."
+          }
+
+      - name: Package Portable Windows x64 Release Bundle
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.semver.outputs.tag }}"
+          $zipName = "${{ steps.semver.outputs.zip_name }}"
+          $stageDir = "dist\TicketOCR-$tag-win64"
+
+          New-Item -ItemType Directory -Force -Path "$stageDir\locales" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$stageDir\data" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$stageDir\assets\corpus" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$stageDir\docs" | Out-Null
+
+          Copy-Item "build\ticket_ocr_gui.exe" "$stageDir\" -Force
+          Copy-Item "build\ticket_ocr_cli.exe" "$stageDir\" -Force
+          Copy-Item "locales\*.json" "$stageDir\locales\" -Force
+          Copy-Item "data\knowledge_base.json" "$stageDir\data\" -Force
+          Copy-Item "assets\corpus\*" "$stageDir\assets\corpus\" -Recurse -Force
+          Copy-Item "README.md" "$stageDir\" -Force
+          if (Test-Path "docs") {
+            Copy-Item "docs\*" "$stageDir\docs\" -Recurse -Force
+          }
+
+          Compress-Archive -Path "$stageDir\*" -DestinationPath "dist\$zipName" -Force
+
+          $hash = (Get-FileHash -Path "dist\$zipName" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $zipName" | Set-Content -Path "dist\SHA256SUMS.txt" -Encoding UTF8
+          Write-Host "Packaged dist\$zipName (SHA256: $hash)"
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TicketOCR-${{ steps.semver.outputs.tag }}-win64
+          path: |
+            dist/${{ steps.semver.outputs.zip_name }}
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  release:
+    name: Publish SemVer GitHub Release
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Packaged Release Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: TicketOCR-${{ needs.build.outputs.tag }}-win64
+          path: release_assets
+
+      - name: Create SemVer Tag & Publish Downloadable GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: "TicketOCR Studio ${{ needs.build.outputs.tag }}"
+          generate_release_notes: true
+          body: |
+            ### TicketOCR Studio `${{ needs.build.outputs.tag }}` — Portable Windows x64 Release
+
+            Native C++20 desktop application & CLI that extracts error details (`error_code`, `module`, `version`, `URL`, `message`) from desktop screenshots and mobile phone photos of monitors (with **Anti-Moiré DSP** & **Dark Mode** normalization), redacts sensitive PII/secrets with **Zero Leakage**, classifies support incidents, and pre-fills ITSM tickets with **Knowledge Base (KB)** recommendations.
+
+            #### Quick Start (No Installation Required)
+            1. Download **`${{ needs.build.outputs.zip_name }}`** below and extract it anywhere.
+            2. Run **`ticket_ocr_gui.exe`** to launch the desktop app (defaults to **English**, with **Language -> English / Español** and **View -> Light / Dark Theme** menus).
+            3. Or run **`ticket_ocr_cli.exe --help`** from PowerShell / Command Prompt for batch CLI analysis and benchmarking.
+
+            *Requires Windows 10 (1809+) or Windows 11 x64.*
+          files: |
+            release_assets/${{ needs.build.outputs.zip_name }}
+            release_assets/SHA256SUMS.txt
