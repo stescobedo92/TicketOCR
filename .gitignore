@@ -1,0 +1,50 @@
+# CMake & Out-of-source Build Directories
+build/
+out/
+dist/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+compile_commands.json
+Makefile
+*.ninja
+.ninja_deps
+.ninja_log
+
+# MSVC / Visual Studio / IDE Artifacts
+.vs/
+.vscode/
+*.VC.db
+*.VC.opendb
+*.sln
+*.vcxproj*
+*.user
+*.suo
+*.aps
+*.iobj
+*.ipdb
+*.pdb
+*.ilk
+*.obj
+*.o
+*.pch
+*.idb
+*.exp
+*.lib
+*.dll
+*.exe
+
+# Temporary & Ad-hoc Ticket Exports
+generated_ticket.json
+generated_ticket.md
+tmp_*
+*.tmp
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

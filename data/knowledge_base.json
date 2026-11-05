@@ -1,0 +1,427 @@
+{
+  "articles": [
+    {
+      "category": "AUTENTICACION_ACCESO",
+      "error_codes": [
+        "ERR-AUTH-4019",
+        "HTTP 401"
+      ],
+      "id": "KB-1001",
+      "keywords": [
+        "autenticacion",
+        "jwt",
+        "token",
+        "sso",
+        "oauth",
+        "sesion expirada",
+        "authgateway",
+        "unauthorized"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/iam/KB-1001",
+      "resolution_steps": [
+        "Verificar sincronización NTP del nodo cliente/servidor (desviación máxima tolerada: 60s).",
+        "Forzar actualización de caché JWKS en AuthGateway.TokenValidator.",
+        "Solicitar al usuario cerrar sesión completamente y renovar flujo OAuth2/OIDC."
+      ],
+      "root_cause": "Desfase de reloj NTP o rotación de clave pública JWKS en el proveedor de identidad (IdP).",
+      "title": "Resolución de expiración o firma inválida de tokens SSO/JWT (ERR-AUTH-4019 / HTTP 401)"
+    },
+    {
+      "category": "AUTENTICACION_ACCESO",
+      "error_codes": [
+        "0x80070005",
+        "ERR-AUTH-4030",
+        "HTTP 403"
+      ],
+      "id": "KB-1002",
+      "keywords": [
+        "acceso denegado",
+        "access denied",
+        "permisos",
+        "forbidden",
+        "rbac",
+        "rol",
+        "identityprovider"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/iam/KB-1002",
+      "resolution_steps": [
+        "Validar membresía de grupos IAM del usuario afectado en consola de seguridad.",
+        "Confirmar política de acceso condicional MFA para el entorno solicitado.",
+        "Reemitir credenciales de sesión tras asignar el rol correspondiente."
+      ],
+      "root_cause": "El perfil del usuario carece del rol operativo requerido en Active Directory / IAM para el módulo invocado.",
+      "title": "Permisos insuficientes o denegación RBAC en recursos corporativos (0x80070005 / HTTP 403)"
+    },
+    {
+      "category": "AUTENTICACION_ACCESO",
+      "error_codes": [
+        "ERR-AUTH-4092"
+      ],
+      "id": "KB-1003",
+      "keywords": [
+        "saml",
+        "mfa",
+        "credenciales",
+        "credentials",
+        "bloqueo",
+        "federation",
+        "login"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/iam/KB-1003",
+      "resolution_steps": [
+        "Desbloquear contador temporal MFA en el panel IdentityProvider.SamlBroker.",
+        "Comprobar vigencia del certificado X.509 de federación empresarial.",
+        "Verificar que el navegador no bloquee cookies SameSite=None del IdP."
+      ],
+      "root_cause": "Certificado SAML vencido o límite de reintentos de segundo factor alcanzado.",
+      "title": "Fallo de federación SAML 2.0 y bloqueo preventivo por intentos MFA (ERR-AUTH-4092)"
+    },
+    {
+      "category": "RED_CONECTIVIDAD",
+      "error_codes": [
+        "ERR-NET-5040",
+        "HTTP 504",
+        "ETIMEDOUT"
+      ],
+      "id": "KB-2001",
+      "keywords": [
+        "tiempo de espera",
+        "timed out",
+        "gateway timeout",
+        "upstream",
+        "apigateway",
+        "netproxy"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/network/KB-2001",
+      "resolution_steps": [
+        "Ejecutar health-check del upstream desde ApiGateway.UpstreamRouter.",
+        "Comprobar latencia p99 y estado del túnel VPN corporativo.",
+        "Ajustar timeout de proxy reverso si la operación procesa lotes extensos."
+      ],
+      "root_cause": "Saturación de workers en el microservicio destino o bloqueo de ruta en túnel VPN/Firewall.",
+      "title": "Timeout de enlace con servicios Upstream / API Gateway (HTTP 504 / ERR-NET-5040)"
+    },
+    {
+      "category": "RED_CONECTIVIDAD",
+      "error_codes": [
+        "ERR-NET-5260",
+        "HTTP 502"
+      ],
+      "id": "KB-2002",
+      "keywords": [
+        "tls",
+        "ssl",
+        "handshake",
+        "certificado",
+        "proxy",
+        "bad gateway",
+        "netproxy"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/network/KB-2002",
+      "resolution_steps": [
+        "Instalar la cadena CA corporativa actualizada en el almacén de confianza del SO.",
+        "Confirmar soporte de cifrados TLS 1.2/1.3 en el endpoint remoto.",
+        "Excluir el dominio de API interna de la inspección SSL profunda del proxy."
+      ],
+      "root_cause": "Inspección HTTPS intermedia sin certificado raíz corporativo instalado en el almacén local.",
+      "title": "Fallo de negociación TLS 1.3 / Certificado SSL no confiable en proxy corporativo (ERR-NET-5260)"
+    },
+    {
+      "category": "RED_CONECTIVIDAD",
+      "error_codes": [
+        "ECONNREFUSED",
+        "HTTP 503",
+        "ERR_CONNECTION_TIMED_OUT"
+      ],
+      "id": "KB-2003",
+      "keywords": [
+        "conexion",
+        "unreachable",
+        "sin conexion",
+        "dns",
+        "503",
+        "puerto"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/network/KB-2003",
+      "resolution_steps": [
+        "Verificar resolución DNS interna y estado de endpoints en el balanceador L7.",
+        "Confirmar que el servicio escucha en el puerto esperado y no esté en ventana de mantenimiento."
+      ],
+      "root_cause": "Instancia backend fuera de rotación en el balanceador o fallo de resolución DNS interna.",
+      "title": "Conexión rechazada o servicio no disponible en clúster regional (ECONNREFUSED / HTTP 503)"
+    },
+    {
+      "category": "BASE_DE_DATOS",
+      "error_codes": [
+        "ORA-12170",
+        "ERR-DB-3010"
+      ],
+      "id": "KB-3001",
+      "keywords": [
+        "pool de conexiones",
+        "connection pool",
+        "ora-",
+        "database",
+        "base de datos",
+        "dbcluster",
+        "postgres"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/dba/KB-3001",
+      "resolution_steps": [
+        "Inspeccionar conexiones activas e inactivas en DbCluster.ConnectionPool.",
+        "Verificar alcanzabilidad de red hacia el listener primario (puerto 1521/5432).",
+        "Reciclar ordenadamente los pods con conexiones huérfanas y habilitar statement_timeout."
+      ],
+      "root_cause": "Fuga de conexiones abiertas sin cerrar o bloqueo de firewall hacia el listener de BD.",
+      "title": "Timeout y agotamiento del pool de conexiones a Base de Datos (ORA-12170 / ERR-DB-3010)"
+    },
+    {
+      "category": "BASE_DE_DATOS",
+      "error_codes": [
+        "SQLSTATE[40001]",
+        "SQLSTATE[23505]",
+        "ERR-DB-4001"
+      ],
+      "id": "KB-3002",
+      "keywords": [
+        "deadlock",
+        "interbloqueo",
+        "sqlstate",
+        "unique constraint",
+        "llave",
+        "transaccion",
+        "repository"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/dba/KB-3002",
+      "resolution_steps": [
+        "Revisar el grafo de bloqueo en pg_stat_activity / performance_schema.",
+        "Verificar clave de idempotencia antes de reinsertar el registro.",
+        "Aplicar política de reintento exponencial para errores serializables 40001."
+      ],
+      "root_cause": "Transacciones concurrentes adquiriendo bloqueos de fila en orden inverso o reintento no idempotente.",
+      "title": "Interbloqueo transaccional (Deadlock) o violación de restricción única (SQLSTATE[40001] / SQLSTATE[23505])"
+    },
+    {
+      "category": "BASE_DE_DATOS",
+      "error_codes": [
+        "ERR-DB-3088"
+      ],
+      "id": "KB-3003",
+      "keywords": [
+        "replica",
+        "query",
+        "sqlserver",
+        "mysql",
+        "sincronizacion"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/dba/KB-3003",
+      "resolution_steps": [
+        "Redirigir temporalmente lecturas críticas al nodo primario del clúster.",
+        "Revisar IOPS de almacenamiento en la réplica afectada."
+      ],
+      "root_cause": "Retraso de replicación superior al umbral de consistencia configurado en el ORM.",
+      "title": "Fallo de réplica de lectura y latencia de sincronización WAL (ERR-DB-3088)"
+    },
+    {
+      "category": "FACTURACION_PAGOS",
+      "error_codes": [
+        "ERR-CFDI-4402",
+        "ERR-BILL-4402"
+      ],
+      "id": "KB-4001",
+      "keywords": [
+        "facturacion",
+        "factura",
+        "cfdi",
+        "timbrado",
+        "impuesto",
+        "billing",
+        "invoice"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/finops/KB-4001",
+      "resolution_steps": [
+        "Validar vigencia del archivo .cer/.key del emisor en BillingEngine.CfdiSigner.",
+        "Comprobar catálogo fiscal de régimen y código postal del receptor.",
+        "Reprocesar comprobante desde la cola de documentos pendientes sin duplicar folio."
+      ],
+      "root_cause": "Certificado de Sello Digital (CSD) vencido o discrepancia de redondeo en tasas de impuestos.",
+      "title": "Error de timbrado fiscal CFDI / Rechazo de sello digital en motor de facturación (ERR-CFDI-4402)"
+    },
+    {
+      "category": "FACTURACION_PAGOS",
+      "error_codes": [
+        "ERR-PAY-4021"
+      ],
+      "id": "KB-4002",
+      "keywords": [
+        "pasarela",
+        "payment",
+        "cobro",
+        "cargo rechazado",
+        "card declined",
+        "stripe"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/finops/KB-4002",
+      "resolution_steps": [
+        "Confirmar estado del intento de cobro en PaymentGateway.ChargeProcessor usando ID de referencia (nunca solicitar PAN completo).",
+        "Solicitar al cliente completar autenticación 3DS2 o emplear método de pago alterno."
+      ],
+      "root_cause": "Rechazo del banco emisor por validación 3D-Secure incompleta o límite transaccional.",
+      "title": "Rechazo en pasarela de pagos / Tokenización fallida de tarjeta (ERR-PAY-4021)"
+    },
+    {
+      "category": "FACTURACION_PAGOS",
+      "error_codes": [
+        "ERR-BILL-4109"
+      ],
+      "id": "KB-4003",
+      "keywords": [
+        "billing",
+        "invoice",
+        "suscripcion",
+        "moneda",
+        "conciliacion"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/finops/KB-4003",
+      "resolution_steps": [
+        "Actualizar tabla de tipos de cambio diarios en el servicio financiero.",
+        "Ejecutar job de reconciliación idempotente para el cliente afectado."
+      ],
+      "root_cause": "Tipo de cambio no sincronizado para el periodo contable activo.",
+      "title": "Desajuste de moneda o webhook duplicado en conciliación de suscripción (ERR-BILL-4109)"
+    },
+    {
+      "category": "SISTEMA_MEMORIA_CRASH",
+      "error_codes": [
+        "0xC0000005",
+        "ERR-SYS-5005"
+      ],
+      "id": "KB-5001",
+      "keywords": [
+        "access violation",
+        "violacion de acceso",
+        "segmentation fault",
+        "sigsegv",
+        "crash",
+        "coreruntime"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/runtime/KB-5001",
+      "resolution_steps": [
+        "Recolectar minidump (.dmp) generado en %LOCALAPPDATA%\\CrashDumps.",
+        "Desactivar aceleración por hardware GPU si ocurre al renderizar reportes pesados.",
+        "Actualizar el cliente a la revisión parcheada más reciente de CoreRuntime."
+      ],
+      "root_cause": "Desreferencia de puntero nulo en caché gráfica o librería nativa desactualizada.",
+      "title": "Violación de acceso a memoria / Crash nativo en módulo de escritorio o worker (0xC0000005 / SIGSEGV)"
+    },
+    {
+      "category": "SISTEMA_MEMORIA_CRASH",
+      "error_codes": [
+        "ERR-MEM-5012",
+        "0xE0434352"
+      ],
+      "id": "KB-5002",
+      "keywords": [
+        "out of memory",
+        "memoria insuficiente",
+        "oom",
+        "heap",
+        "stack overflow"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/runtime/KB-5002",
+      "resolution_steps": [
+        "Habilitar modo de exportación paginada por lotes (chunk_size=5000).",
+        "Incrementar límite de memoria del contenedor/proceso de 2 GB a 4 GB si está justificado."
+      ],
+      "root_cause": "Carga en memoria completa de dataset sin paginación por streaming.",
+      "title": "Agotamiento de memoria Heap / Out Of Memory al exportar volúmenes masivos (ERR-MEM-5012)"
+    },
+    {
+      "category": "SISTEMA_MEMORIA_CRASH",
+      "error_codes": [
+        "ERR-SYS-5028"
+      ],
+      "id": "KB-5003",
+      "keywords": [
+        "disco lleno",
+        "no space left on device",
+        "almacenamiento",
+        "temp"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/runtime/KB-5003",
+      "resolution_steps": [
+        "Ejecutar limpieza inmediata de artefactos temporales y rotar logs comprimidos.",
+        "Verificar cuota de volumen persistente y alertas de capacidad al 80%."
+      ],
+      "root_cause": "Rotación de logs inactiva en /var/log o carpeta temporal saturada.",
+      "title": "Almacenamiento lleno en volumen temporal o partición de logs (ERR-SYS-5028)"
+    },
+    {
+      "category": "CONFIGURACION_COMPATIBILIDAD",
+      "error_codes": [
+        "ERR-CFG-6014",
+        "ERR-COMP-6014"
+      ],
+      "id": "KB-6001",
+      "keywords": [
+        "incompatible",
+        "version obsoleta",
+        "unsupported version",
+        "deprecated",
+        "schema mismatch",
+        "configloader"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/config/KB-6001",
+      "resolution_steps": [
+        "Ejecutar el actualizador automático empresarial o desplegar paquete MSI/DMG vigente.",
+        "Limpiar caché local de esquemas en ConfigLoader.SchemaValidator tras actualizar."
+      ],
+      "root_cause": "El cliente ejecuta una versión anterior al corte mínimo obligatorio del servidor.",
+      "title": "Versión de cliente incompatible con el contrato de API actual (ERR-CFG-6014)"
+    },
+    {
+      "category": "CONFIGURACION_COMPATIBILIDAD",
+      "error_codes": [
+        "0x8007007E",
+        "ERR-CFG-6078"
+      ],
+      "id": "KB-6002",
+      "keywords": [
+        "missing dependency",
+        "dependencia faltante",
+        "pluginmanager",
+        "dll",
+        "modulo no encontrado"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/config/KB-6002",
+      "resolution_steps": [
+        "Reparar instalación del paquete Microsoft Visual C++ Redistributable x64.",
+        "Verificar integridad de plugins firmados en el directorio de la aplicación."
+      ],
+      "root_cause": "Paquete redistribuible de runtime C++ ausente o ruta PATH corrupta.",
+      "title": "Dependencia dinámica o librería del sistema faltante al iniciar módulo (0x8007007E / ERR-CFG-6078)"
+    },
+    {
+      "category": "CONFIGURACION_COMPATIBILIDAD",
+      "error_codes": [
+        "ERR-CFG-6033"
+      ],
+      "id": "KB-6003",
+      "keywords": [
+        "parametro invalido",
+        "invalid parameter",
+        "configuracion",
+        "configuration",
+        "variable de entorno"
+      ],
+      "reference_doc_url": "https://kb.soporte.internal/config/KB-6003",
+      "resolution_steps": [
+        "Validar archivo settings.json contra la plantilla oficial del entorno.",
+        "Restablecer valores predeterminados de fábrica desde el menú Diagnóstico."
+      ],
+      "root_cause": "Formato numérico/fecha incompatible o clave obligatoria ausente en archivo de configuración.",
+      "title": "Parámetro de configuración regional o variable de entorno inválida (ERR-CFG-6033)"
+    }
+  ],
+  "version": "1.0"
+}
