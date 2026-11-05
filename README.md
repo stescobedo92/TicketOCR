@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icons/ticket_ocr.png" width="112" alt="TicketOCR Studio Application Icon" />
+</p>
+
 # TicketOCR Studio (C++20) — Intelligent Error Screenshot Reader & ITSM Ticket Generator
 
 [![Build & SemVer Release](https://github.com/stescobedo92/TicketOCR/actions/workflows/release.yml/badge.svg)](https://github.com/stescobedo92/TicketOCR/actions/workflows/release.yml)
@@ -81,7 +85,11 @@ In enterprise technical support (SaaS platforms, banking, electronic invoicing E
 │   └── es.json                          # Spanish i18n catalog (Español)
 ├── data/
 │   └── knowledge_base.json              # Structured 18-article support Knowledge Base catalog
-├── assets/corpus/                       # 18 anonymized test screenshots (Multi-OS, Dark Mode, Moiré, PII)
+├── assets/
+│   ├── icons/                           # Multi-resolution Windows .ico (16px-256px) & PNG app icon
+│   └── corpus/                          # 18 anonymized test screenshots (Multi-OS, Dark Mode, Moiré, PII)
+├── resources/
+│   └── app.rc                           # Native Win32 PE icon & version resource script
 ├── include/ticket_ocr/                  # Clean modular C++20 public headers (Core, i18n, DLP, GUI)
 ├── src/
 │   ├── core/                            # Preprocessor, WinRT OCR, DLP, Extractor, Classifier, KB, i18n, Metrics

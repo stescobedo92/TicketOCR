@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(WIN32)
+    enable_language(RC)
+endif()
+
 if(MSVC)
     add_compile_options(/utf-8 /W4 /EHsc /MP /permissive-)
     add_compile_definitions(
@@ -63,15 +67,17 @@ target_link_libraries(ticket_ocr_core PUBLIC
     user32
 )
 
-# Graphical User Interface executable (Win32 + GDI+ Modern High-DPI App)
+# Graphical User Interface executable (Win32 + GDI+ Modern High-DPI App + Custom Icon Resource)
 add_executable(ticket_ocr_gui WIN32
     src/app/main_gui.cpp
+    resources/app.rc
 )
 target_link_libraries(ticket_ocr_gui PRIVATE ticket_ocr_core)
 
 # Command-Line & Automated Benchmark / Corpus Tool
 add_executable(ticket_ocr_cli
     src/cli/main_cli.cpp
+    resources/app.rc
 )
 target_link_libraries(ticket_ocr_cli PRIVATE ticket_ocr_core)
 
@@ -79,7 +85,7 @@ target_link_libraries(ticket_ocr_cli PRIVATE ticket_ocr_core)
 enable_testing()
 
 function(add_ticket_ocr_test TEST_NAME TEST_SOURCE)
-    add_executable(${TEST_NAME} ${TEST_SOURCE})
+    add_executable(${TEST_NAME} ${TEST_SOURCE} resources/app.rc)
     target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(${TEST_NAME} PRIVATE ticket_ocr_core)
     add_test(NAME ${TEST_NAME}

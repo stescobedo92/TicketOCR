@@ -34,10 +34,13 @@ TEST_CASE(GuiDefaultEnglishI18nThemeSwitchingAndZeroLeakExport) {
         REQUIRE_TRUE(CorpusGenerator::generate_corpus_on_disk(corpus_dir));
     }
 
-    // 1. Verify English is the default language and Light is the default theme
+    // 1. Verify English is the default language, Light is the default theme, and Custom App Icon is assigned
     GuiMainWindow gui(root);
     REQUIRE_TRUE(gui.create(GetModuleHandleW(nullptr), g_visual_mode ? SW_SHOWDEFAULT : SW_HIDE));
     pump_pending_messages();
+
+    REQUIRE_TRUE(SendMessageW(gui.hwnd(), WM_GETICON, ICON_BIG, 0) != 0);
+    REQUIRE_TRUE(SendMessageW(gui.hwnd(), WM_GETICON, ICON_SMALL, 0) != 0);
 
     const GuiControlSnapshot snap_init = gui.capture_control_snapshot();
     REQUIRE_TRUE(snap_init.active_locale == Locale::English);

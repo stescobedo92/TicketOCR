@@ -147,6 +147,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$stageDir\locales" | Out-Null
           New-Item -ItemType Directory -Force -Path "$stageDir\data" | Out-Null
           New-Item -ItemType Directory -Force -Path "$stageDir\assets\corpus" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$stageDir\assets\icons" | Out-Null
           New-Item -ItemType Directory -Force -Path "$stageDir\docs" | Out-Null
 
           Copy-Item "build\ticket_ocr_gui.exe" "$stageDir\" -Force
@@ -154,6 +155,7 @@ jobs:
           Copy-Item "locales\*.json" "$stageDir\locales\" -Force
           Copy-Item "data\knowledge_base.json" "$stageDir\data\" -Force
           Copy-Item "assets\corpus\*" "$stageDir\assets\corpus\" -Recurse -Force
+          Copy-Item "assets\icons\*" "$stageDir\assets\icons\" -Recurse -Force
           Copy-Item "README.md" "$stageDir\" -Force
           if (Test-Path "docs") {
             Copy-Item "docs\*" "$stageDir\docs\" -Recurse -Force

@@ -1,5 +1,6 @@
 #include "ticket_ocr/gui_app.hpp"
 #include "ticket_ocr/metrics_evaluator.hpp"
+#include "ticket_ocr/resource.h"
 
 #include <Windows.h>
 #include <commctrl.h>
@@ -121,6 +122,8 @@ struct GuiMainWindow::Impl {
     HBRUSH light_input_brush = nullptr;
     HBRUSH dark_bg_brush = nullptr;
     HBRUSH dark_input_brush = nullptr;
+    HICON app_icon_big = nullptr;
+    HICON app_icon_small = nullptr;
 
     HMENU menu_bar = nullptr;
     RECT canvas_rect{20, 100, 620, 740};
@@ -164,6 +167,8 @@ struct GuiMainWindow::Impl {
         if (light_input_brush) DeleteObject(light_input_brush);
         if (dark_bg_brush) DeleteObject(dark_bg_brush);
         if (dark_input_brush) DeleteObject(dark_input_brush);
+        if (app_icon_big) DestroyIcon(app_icon_big);
+        if (app_icon_small) DestroyIcon(app_icon_small);
     }
 };
 
@@ -207,6 +212,26 @@ bool GuiMainWindow::create(HINSTANCE hInstance, int nCmdShow) {
     icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES | ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&icex);
 
+    const int big_cx = GetSystemMetrics(SM_CXICON);
+    const int big_cy = GetSystemMetrics(SM_CYICON);
+    const int sm_cx  = GetSystemMetrics(SM_CXSMICON);
+    const int sm_cy  = GetSystemMetrics(SM_CYSMICON);
+
+    impl_->app_icon_big = static_cast<HICON>(LoadImageW(
+        hInstance, MAKEINTRESOURCEW(IDI_APP_ICON), IMAGE_ICON, big_cx, big_cy, LR_DEFAULTCOLOR));
+    impl_->app_icon_small = static_cast<HICON>(LoadImageW(
+        hInstance, MAKEINTRESOURCEW(IDI_APP_ICON), IMAGE_ICON, sm_cx, sm_cy, LR_DEFAULTCOLOR));
+
+    const std::filesystem::path ico_file = workspace_root_ / "assets" / "icons" / "ticket_ocr.ico";
+    if (!impl_->app_icon_big && std::filesystem::exists(ico_file)) {
+        impl_->app_icon_big = static_cast<HICON>(LoadImageW(
+            nullptr, ico_file.c_str(), IMAGE_ICON, big_cx, big_cy, LR_LOADFROMFILE));
+    }
+    if (!impl_->app_icon_small && std::filesystem::exists(ico_file)) {
+        impl_->app_icon_small = static_cast<HICON>(LoadImageW(
+            nullptr, ico_file.c_str(), IMAGE_ICON, sm_cx, sm_cy, LR_LOADFROMFILE));
+    }
+
     const wchar_t* kClassName = L"TicketOcrMainWindowClass";
     WNDCLASSEXW wc{};
     wc.cbSize = sizeof(wc);
@@ -214,7 +239,8 @@ bool GuiMainWindow::create(HINSTANCE hInstance, int nCmdShow) {
     wc.lpfnWndProc = &GuiMainWindow::WndProc;
     wc.hInstance = hInstance;
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    wc.hIcon = impl_->app_icon_big ? impl_->app_icon_big : LoadIcon(nullptr, IDI_APPLICATION);
+    wc.hIconSm = impl_->app_icon_small ? impl_->app_icon_small : LoadIcon(nullptr, IDI_APPLICATION);
     wc.hbrBackground = nullptr; // Custom handled in WM_ERASEBKGND for smooth Light/Dark switching
     wc.lpszClassName = kClassName;
     RegisterClassExW(&wc);
@@ -231,6 +257,13 @@ bool GuiMainWindow::create(HINSTANCE hInstance, int nCmdShow) {
     );
 
     if (!hwnd_) return false;
+
+    if (impl_->app_icon_big) {
+        SendMessageW(hwnd_, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(impl_->app_icon_big));
+    }
+    if (impl_->app_icon_small) {
+        SendMessageW(hwnd_, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(impl_->app_icon_small));
+    }
 
     rebuild_menu_bar();
     apply_i18n_texts();
